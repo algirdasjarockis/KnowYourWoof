@@ -7,5 +7,7 @@ data class QuizUiState(
     val currentQuizItem: QuizItem = QuizItem("", DogPhotoItem("", "")),
     val options: List<String> = emptyList(),
     val answered: Int = 0,
+    val currentQuizIndex: Int = 0,
+    val finished: Boolean = false,
     val assessmentMessage: String = ""
 )

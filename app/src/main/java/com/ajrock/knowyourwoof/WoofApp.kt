@@ -5,12 +5,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,6 +35,7 @@ import com.ajrock.knowyourwoof.ui.WoofScreenWelcome
 enum class WoofRoute {
     Welcome,
     Quiz,
+    Assessment,
     Stats,
     About
 }
@@ -43,18 +51,23 @@ fun WoofApp(
     viewModel: MainViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = WoofRoute.valueOf(
         backStackEntry?.destination?.route ?: WoofRoute.Welcome.name
     )
 
     Scaffold(
+        topBar = {
+            var title = "Woof!"
+            if (currentRoute == WoofRoute.Quiz)
+                title = "%d/%d question".format(uiState.currentQuizIndex + 1, viewModel.maxQuizItemCount)
+            WoofAppBar(currentRoute = currentRoute, navController = navController, title = title)
+        },
         bottomBar = {
             WoofNavigationBar(currentRoute, navController)
         }
     ) { innerPadding ->
-        val uiState by viewModel.uiState.collectAsState()
-
         NavHost(
             navController = navController,
             startDestination = WoofRoute.Welcome.name,
@@ -71,6 +84,7 @@ fun WoofApp(
                     quizItem = uiState.currentQuizItem,
                     baseImageUrl = viewModel.baseImageUrl,
                     options = uiState.options,
+                    isFinished = uiState.finished,
                     message = uiState.assessmentMessage,
                     onAnswerSelected = { viewModel.checkAnswer(it) },
                     onNextButtonClick = { viewModel.nextQuizItem() }
@@ -86,6 +100,35 @@ fun WoofApp(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WoofAppBar(
+    currentRoute: WoofRoute,
+    navController: NavHostController,
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    val showNavIcon = currentRoute != WoofRoute.Quiz && currentRoute != WoofRoute.Welcome
+
+    CenterAlignedTopAppBar(
+        title = { Text(title) },
+        colors = TopAppBarDefaults.mediumTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        modifier = modifier,
+        navigationIcon = {
+            if (showNavIcon) {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Back Button"
+                    )
+                }
+            }
+        }
+    )
+}
+
 @Composable
 fun WoofNavigationBar(
     currentRoute: WoofRoute,
@@ -97,9 +140,14 @@ fun WoofNavigationBar(
 
     ) {
         items.forEach { item ->
+            val onSameRoute = currentRoute == item.route
+
             NavigationBarItem(
-                selected = currentRoute == item.route,
-                onClick = { navController.navigate(item.route.name) },
+                selected = onSameRoute,
+                onClick = {
+                    if (!onSameRoute)
+                        navController.navigate(item.route.name)
+                },
                 label = { Text(text = item.labelText)},
                 icon = { Icon(Icons.Filled.Favorite, null) }
             )

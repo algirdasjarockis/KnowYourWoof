@@ -41,6 +41,7 @@ fun WoofScreenQuiz(
     quizItem: QuizItem,
     options: List<String>,
     modifier: Modifier = Modifier,
+    isFinished: Boolean = false,
     message: String = "",
     baseImageUrl: String = "",
     onAnswerSelected: (String) -> Unit = {},
@@ -74,17 +75,25 @@ fun WoofScreenQuiz(
         Text(text = "Author: %s, Source: wikipedia")
         Spacer(modifier = Modifier.height(32.dp))
 
-        Box {
-            SelectionGroup(
-                options = options,
-                onSelected = onAnswerSelected,
-                modifier = Modifier.alpha(if (message.isEmpty()) 1f else 0f)
-            )
-            NextQuizItem(
+        if (isFinished) {
+            FinishedQuizItem(
                 message = message,
                 onNextButtonClick = onNextButtonClick,
-                modifier = Modifier.alpha(if (message.isEmpty()) 0f else 1f)
+                modifier = modifier
             )
+        } else {
+            Box {
+                SelectionGroup(
+                    options = options,
+                    onSelected = onAnswerSelected,
+                    modifier = Modifier.alpha(if (message.isEmpty()) 1f else 0f)
+                )
+                NextQuizItem(
+                    message = message,
+                    onNextButtonClick = onNextButtonClick,
+                    modifier = Modifier.alpha(if (message.isEmpty()) 0f else 1f)
+                )
+            }
         }
     }
 }
@@ -124,13 +133,32 @@ fun NextQuizItem(
     }
 }
 
+@Composable
+fun FinishedQuizItem(
+    message: String,
+    onNextButtonClick: () -> Unit,
+    modifier: Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Text(text = "Quiz is finished!")
+        Text(text = message)
+        Button(onClick = onNextButtonClick) {
+            Text(text = "Restart!")
+        }
+    }
+}
+
 @Preview(showSystemUi = true)
 @Composable
 fun WoofScreeQuizPreview() {
     val item = QuizDataSource.items.first()
     WoofScreenQuiz(
         quizItem = item,
-        message = "",
+        isFinished = true,
+        message = "akdsjfaksdjf",
         options = listOf(item.doggo, "Dog2", "Dog3").shuffled()
     )
 }

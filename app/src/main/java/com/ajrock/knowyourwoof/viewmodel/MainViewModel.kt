@@ -9,12 +9,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+private const val MAX_QUIZ_ITEMS = 3
+private const val BASE_IMG_URL = "https://upload.wikimedia.org/wikipedia/commons"
+
 class MainViewModel : ViewModel() {
+
     private val _uiState = MutableStateFlow(QuizUiState())
     private var _allDoggos = setOf<String>()
 
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
-    val baseImageUrl = "https://upload.wikimedia.org/wikipedia/commons"
+    val baseImageUrl = BASE_IMG_URL
+    val maxQuizItemCount = MAX_QUIZ_ITEMS
 
     init {
         fetchAllDoggos()
@@ -23,27 +28,43 @@ class MainViewModel : ViewModel() {
 
     fun checkAnswer(answer: String)
     {
+        val finished = _uiState.value.currentQuizIndex >= MAX_QUIZ_ITEMS - 1
+        val finalAssessmentMsg = if (finished) {
+            " Correctly answered %d out of %d"
+        }
+        else ""
+
         if (answer == _uiState.value.currentQuizItem.doggo) {
             _uiState.update { currentState ->
                 currentState.copy(
-                    assessmentMessage = "Correct!",
-                    answered = currentState.answered + 1
+                    assessmentMessage = "Correct!${finalAssessmentMsg}"
+                        .format(_uiState.value.answered + 1, maxQuizItemCount),
+                    answered = currentState.answered + 1,
+                    finished = finished
                 )
             }
         } else {
             _uiState.update { currentState ->
                 currentState.copy(
-                    assessmentMessage = "No, you donkey! Correct answer is ${currentState.currentQuizItem.doggo}",
+                    assessmentMessage = "No, you donkey! Correct answer is ${currentState.currentQuizItem.doggo}${finalAssessmentMsg}"
+                        .format(_uiState.value.answered, maxQuizItemCount),
+                    finished = finished
                 )
             }
         }
     }
 
     fun nextQuizItem() {
+        if (_uiState.value.finished) {
+            resetQuiz()
+            return
+        }
+
         val pickedItemPair = pickCurrentQuizOptions()
         _uiState.update { currentState ->
             currentState.copy(
                 currentQuizItem = pickedItemPair.first,
+                currentQuizIndex = currentState.currentQuizIndex + 1,
                 options = pickedItemPair.second,
                 assessmentMessage = ""
             )
@@ -74,15 +95,4 @@ class MainViewModel : ViewModel() {
             it.doggo
         }.toSet()
     }
-
-//    fun rollDice() {
-//        _uiState.update { currentState ->
-//            currentState.copy(
-//                firstDieValue = Random.nextInt(from = 1, until = 7),
-//                secondDieValue = Random.nextInt(from = 1, until = 7),
-//                numberOfRolls = currentState.numberOfRolls + 1,
-//            )
-//        }
-//    }
-
 }
