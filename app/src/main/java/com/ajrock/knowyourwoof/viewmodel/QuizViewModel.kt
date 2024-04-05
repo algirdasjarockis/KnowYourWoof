@@ -1,18 +1,26 @@
 package com.ajrock.knowyourwoof.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.ajrock.knowyourwoof.data.IScoresRepository
 import com.ajrock.knowyourwoof.data.QuizDataSource
+import com.ajrock.knowyourwoof.data.ScoreEntity
 import com.ajrock.knowyourwoof.model.QuizItem
 import com.ajrock.knowyourwoof.ui.state.QuizUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 private const val MAX_QUIZ_ITEMS = 3
 private const val BASE_IMG_URL = "https://upload.wikimedia.org/wikipedia/commons"
 
-class MainViewModel : ViewModel() {
+class QuizViewModel(private val repository: IScoresRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())
     private var _allDoggos = setOf<String>()
@@ -22,13 +30,14 @@ class MainViewModel : ViewModel() {
     val maxQuizItemCount = MAX_QUIZ_ITEMS
 
     init {
+        Log.d("ViewModel", "QuizViewModel initialized")
         fetchAllDoggos()
         resetQuiz()
     }
 
     fun checkAnswer(answer: String)
     {
-        val finished = _uiState.value.currentQuizIndex >= MAX_QUIZ_ITEMS - 1
+        val finished = becameFinished()
         val finalAssessmentMsg = if (finished) {
             " Correctly answered %d out of %d"
         }
@@ -52,14 +61,39 @@ class MainViewModel : ViewModel() {
                 )
             }
         }
+
+        if (finished) {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val now = OffsetDateTime.now(ZoneOffset.UTC).format(formatter)
+
+            viewModelScope.launch {
+                repository.insertScore(ScoreEntity(
+                    correctAnswers = _uiState.value.answered,
+                    totalAttempts = maxQuizItemCount,
+                    date = now
+                ))
+            }
+        }
     }
 
     fun nextQuizItem() {
         if (_uiState.value.finished) {
+            // quiz is already finished
             resetQuiz()
             return
         }
 
+        if (becameFinished()) {
+            // quiz just became finished without checking answer validity
+            _uiState.update { currentState ->
+                currentState.copy(
+                    finished = true
+                )
+            }
+            return
+        }
+
+        // usual flow of answering and going to next quiz item
         val pickedItemPair = pickCurrentQuizOptions()
         _uiState.update { currentState ->
             currentState.copy(
@@ -70,6 +104,8 @@ class MainViewModel : ViewModel() {
             )
         }
     }
+
+    private fun becameFinished() = _uiState.value.currentQuizIndex >= MAX_QUIZ_ITEMS - 1;
 
     private fun resetQuiz() {
         val pickedItemPair = pickCurrentQuizOptions()

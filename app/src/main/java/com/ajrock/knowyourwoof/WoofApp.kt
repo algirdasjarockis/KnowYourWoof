@@ -16,21 +16,23 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.ajrock.knowyourwoof.viewmodel.MainViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.ajrock.knowyourwoof.ioc.ViewModelProvider
 import com.ajrock.knowyourwoof.ui.WoofScreenQuiz
+import com.ajrock.knowyourwoof.ui.WoofScreenStats
 import com.ajrock.knowyourwoof.ui.WoofScreenWelcome
+import com.ajrock.knowyourwoof.viewmodel.QuizViewModel
+import com.ajrock.knowyourwoof.viewmodel.StatsViewModel
 
 enum class WoofRoute {
     Welcome,
@@ -48,10 +50,11 @@ enum class WoofNavigationItem(val route: WoofRoute, val labelText: String) {
 
 @Composable
 fun WoofApp(
-    viewModel: MainViewModel = viewModel(),
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    quizViewModel: QuizViewModel = viewModel(factory = ViewModelProvider.factory),
+    //statsViewModel: StatsViewModel = viewModel(factory = ViewModelProvider.factory)
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    //val uiState by viewModel.uiState.collectAsState()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = WoofRoute.valueOf(
         backStackEntry?.destination?.route ?: WoofRoute.Welcome.name
@@ -60,8 +63,8 @@ fun WoofApp(
     Scaffold(
         topBar = {
             var title = "Woof!"
-            if (currentRoute == WoofRoute.Quiz)
-                title = "%d/%d question".format(uiState.currentQuizIndex + 1, viewModel.maxQuizItemCount)
+//            if (currentRoute == WoofRoute.Quiz)
+//                title = "%d/%d question".format(uiState.currentQuizIndex + 1, viewModel.maxQuizItemCount)
             WoofAppBar(currentRoute = currentRoute, navController = navController, title = title)
         },
         bottomBar = {
@@ -80,18 +83,12 @@ fun WoofApp(
                 WoofScreenWelcome(onStartQuizClicked = { navController.navigate(WoofRoute.Quiz.name) })
             }
             composable(route = WoofRoute.Quiz.name) {
-                WoofScreenQuiz(
-                    quizItem = uiState.currentQuizItem,
-                    baseImageUrl = viewModel.baseImageUrl,
-                    options = uiState.options,
-                    isFinished = uiState.finished,
-                    message = uiState.assessmentMessage,
-                    onAnswerSelected = { viewModel.checkAnswer(it) },
-                    onNextButtonClick = { viewModel.nextQuizItem() }
-                )
+                WoofScreenQuiz(viewModel = quizViewModel)
             }
             composable(route = WoofRoute.Stats.name) {
-
+                val statsViewModel = viewModel<StatsViewModel>(factory = ViewModelProvider.factory)
+                val uiState = statsViewModel.uiState.collectAsState()
+                WoofScreenStats(uiState.value)
             }
             composable(route = WoofRoute.About.name) {
 

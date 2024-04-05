@@ -1,27 +1,17 @@
 package com.ajrock.knowyourwoof.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -30,23 +20,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ajrock.knowyourwoof.R
 import com.ajrock.knowyourwoof.data.QuizDataSource
-import com.ajrock.knowyourwoof.model.QuizItem
+import com.ajrock.knowyourwoof.ioc.ViewModelProvider
+import com.ajrock.knowyourwoof.viewmodel.QuizViewModel
 
 @Composable
 fun WoofScreenQuiz(
-    quizItem: QuizItem,
-    options: List<String>,
     modifier: Modifier = Modifier,
-    isFinished: Boolean = false,
-    message: String = "",
-    baseImageUrl: String = "",
-    onAnswerSelected: (String) -> Unit = {},
-    onNextButtonClick: () -> Unit = {},
+    viewModel: QuizViewModel = viewModel(factory = ViewModelProvider.factory),
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val message = uiState.assessmentMessage
+    val onNextButtonClick = { viewModel.nextQuizItem() }
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -60,7 +50,7 @@ fun WoofScreenQuiz(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(baseImageUrl + quizItem.photo.url)
+                    .data(viewModel.baseImageUrl + uiState.currentQuizItem.photo.url)
                     .crossfade(true)
                     .build(),
                 placeholder = painterResource(R.drawable.doggo),
@@ -75,19 +65,21 @@ fun WoofScreenQuiz(
         Text(text = "Author: %s, Source: wikipedia")
         Spacer(modifier = Modifier.height(32.dp))
 
-        if (isFinished) {
+        if (uiState.finished) {
             FinishedQuizItem(
                 message = message,
                 onNextButtonClick = onNextButtonClick,
                 modifier = modifier
             )
         } else {
-            Box {
+            if (message.isEmpty()) {
                 SelectionGroup(
-                    options = options,
-                    onSelected = onAnswerSelected,
+                    options = uiState.options,
+                    onSelected = { viewModel.checkAnswer(it) },
                     modifier = Modifier.alpha(if (message.isEmpty()) 1f else 0f)
                 )
+            }
+            else {
                 NextQuizItem(
                     message = message,
                     onNextButtonClick = onNextButtonClick,
@@ -156,9 +148,9 @@ fun FinishedQuizItem(
 fun WoofScreeQuizPreview() {
     val item = QuizDataSource.items.first()
     WoofScreenQuiz(
-        quizItem = item,
-        isFinished = true,
-        message = "akdsjfaksdjf",
-        options = listOf(item.doggo, "Dog2", "Dog3").shuffled()
+//        quizItem = item,
+//        isFinished = true,
+//        message = "akdsjfaksdjf",
+//        options = listOf(item.doggo, "Dog2", "Dog3").shuffled()
     )
 }
