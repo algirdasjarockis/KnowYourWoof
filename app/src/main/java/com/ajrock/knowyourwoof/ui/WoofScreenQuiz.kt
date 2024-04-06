@@ -20,18 +20,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ajrock.knowyourwoof.R
 import com.ajrock.knowyourwoof.data.QuizDataSource
-import com.ajrock.knowyourwoof.ioc.ViewModelProvider
 import com.ajrock.knowyourwoof.viewmodel.QuizViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun WoofScreenQuiz(
     modifier: Modifier = Modifier,
-    viewModel: QuizViewModel = viewModel(factory = ViewModelProvider.factory),
+    viewModel: QuizViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val message = uiState.assessmentMessage

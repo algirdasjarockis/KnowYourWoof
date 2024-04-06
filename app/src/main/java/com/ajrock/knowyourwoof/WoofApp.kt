@@ -21,18 +21,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.ajrock.knowyourwoof.ioc.ViewModelProvider
 import com.ajrock.knowyourwoof.ui.WoofScreenQuiz
 import com.ajrock.knowyourwoof.ui.WoofScreenStats
 import com.ajrock.knowyourwoof.ui.WoofScreenWelcome
 import com.ajrock.knowyourwoof.viewmodel.QuizViewModel
 import com.ajrock.knowyourwoof.viewmodel.StatsViewModel
+import org.koin.androidx.compose.koinViewModel
 
 enum class WoofRoute {
     Welcome,
@@ -51,10 +50,8 @@ enum class WoofNavigationItem(val route: WoofRoute, val labelText: String) {
 @Composable
 fun WoofApp(
     navController: NavHostController = rememberNavController(),
-    quizViewModel: QuizViewModel = viewModel(factory = ViewModelProvider.factory),
-    //statsViewModel: StatsViewModel = viewModel(factory = ViewModelProvider.factory)
+    quizViewModel: QuizViewModel = koinViewModel(),
 ) {
-    //val uiState by viewModel.uiState.collectAsState()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = WoofRoute.valueOf(
         backStackEntry?.destination?.route ?: WoofRoute.Welcome.name
@@ -86,7 +83,7 @@ fun WoofApp(
                 WoofScreenQuiz(viewModel = quizViewModel)
             }
             composable(route = WoofRoute.Stats.name) {
-                val statsViewModel = viewModel<StatsViewModel>(factory = ViewModelProvider.factory)
+                val statsViewModel = koinViewModel<StatsViewModel>()
                 val uiState = statsViewModel.uiState.collectAsState()
                 WoofScreenStats(uiState.value)
             }
