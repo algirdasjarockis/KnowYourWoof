@@ -4,8 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ajrock.knowyourwoof.data.IScoresRepository
-import com.ajrock.knowyourwoof.data.QuizDataSource
 import com.ajrock.knowyourwoof.data.ScoreEntity
+import com.ajrock.knowyourwoof.data.repository.IDogRepository
+import com.ajrock.knowyourwoof.model.BreedModel
 import com.ajrock.knowyourwoof.model.QuizItem
 import com.ajrock.knowyourwoof.ui.state.QuizUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,21 +19,25 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 private const val MAX_QUIZ_ITEMS = 3
-private const val BASE_IMG_URL = "https://upload.wikimedia.org/wikipedia/commons"
 
-class QuizViewModel(private val repository: IScoresRepository) : ViewModel() {
+class QuizViewModel(
+    private val repository: IScoresRepository,
+    private val doggosRepo: IDogRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())
-    private var _allDoggos = setOf<String>()
+    private var _allDoggos = setOf<BreedModel>()
 
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
-    val baseImageUrl = BASE_IMG_URL
     val maxQuizItemCount = MAX_QUIZ_ITEMS
 
     init {
         Log.d("ViewModel", "QuizViewModel initialized")
-        fetchAllDoggos()
-        resetQuiz()
+
+        viewModelScope.launch {
+            _allDoggos = doggosRepo.fetchAllBreeds().toSet()
+            resetQuiz()
+        }
     }
 
     fun checkAnswer(answer: String)
@@ -43,7 +48,7 @@ class QuizViewModel(private val repository: IScoresRepository) : ViewModel() {
         }
         else ""
 
-        if (answer == _uiState.value.currentQuizItem.doggo) {
+        if (answer == _uiState.value.currentQuizItem.doggo.displayName) {
             _uiState.update { currentState ->
                 currentState.copy(
                     assessmentMessage = "Correct!${finalAssessmentMsg}"
@@ -77,6 +82,22 @@ class QuizViewModel(private val repository: IScoresRepository) : ViewModel() {
     }
 
     fun nextQuizItem() {
+        viewModelScope.launch {
+            prepareNextQuizItem()
+        }
+    }
+
+    private fun becameFinished() = _uiState.value.currentQuizIndex >= MAX_QUIZ_ITEMS - 1;
+
+    private suspend fun resetQuiz() {
+        val pickedItemPair = pickCurrentQuizOptions()
+        _uiState.value = QuizUiState(
+            currentQuizItem = pickedItemPair.first,
+            options = pickedItemPair.second
+        )
+    }
+
+    private suspend fun prepareNextQuizItem() {
         if (_uiState.value.finished) {
             // quiz is already finished
             resetQuiz()
@@ -105,30 +126,23 @@ class QuizViewModel(private val repository: IScoresRepository) : ViewModel() {
         }
     }
 
-    private fun becameFinished() = _uiState.value.currentQuizIndex >= MAX_QUIZ_ITEMS - 1;
-
-    private fun resetQuiz() {
-        val pickedItemPair = pickCurrentQuizOptions()
-        _uiState.value = QuizUiState(
-            currentQuizItem = pickedItemPair.first,
-            options = pickedItemPair.second
-        )
-    }
-
-    private fun pickCurrentQuizOptions(): Pair<QuizItem, List<String>>
+    private suspend fun pickCurrentQuizOptions(): Pair<QuizItem, List<String>>
     {
-        val currentQuizItem = QuizDataSource.items.random()
-        val doggos = _allDoggos.minus(currentQuizItem.doggo)
+        val randomBreed = _allDoggos.random()
+        val imageUrl = doggosRepo.fetchImageByBreed(randomBreed)
+
+        if (imageUrl.isNullOrBlank()) {
+            throw Exception("Couldn't get image path")
+        }
+
+        val currentQuizItem = QuizItem(randomBreed, imageUrl)
+        val doggos = _allDoggos.minus(randomBreed)
         val option1 = doggos.random()
         val option2 = doggos.minus(option1).random()
 
-        return Pair(currentQuizItem, listOf(currentQuizItem.doggo, option1, option2).shuffled())
-    }
-
-    private fun fetchAllDoggos()
-    {
-        _allDoggos = QuizDataSource.items.map {
-            it.doggo
-        }.toSet()
+        return Pair(
+            currentQuizItem,
+            listOf(currentQuizItem.doggo.displayName, option1.displayName, option2.displayName
+        ).shuffled())
     }
 }

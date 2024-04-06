@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ajrock.knowyourwoof.R
-import com.ajrock.knowyourwoof.data.QuizDataSource
 import com.ajrock.knowyourwoof.viewmodel.QuizViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -49,7 +48,7 @@ fun WoofScreenQuiz(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(viewModel.baseImageUrl + uiState.currentQuizItem.photo.url)
+                    .data(uiState.currentQuizItem.photo)
                     .crossfade(true)
                     .build(),
                 placeholder = painterResource(R.drawable.doggo),
@@ -61,7 +60,6 @@ fun WoofScreenQuiz(
             )
         }
 
-        Text(text = "Author: %s, Source: wikipedia")
         Spacer(modifier = Modifier.height(32.dp))
 
         if (uiState.finished) {
@@ -145,7 +143,6 @@ fun FinishedQuizItem(
 @Preview(showSystemUi = true)
 @Composable
 fun WoofScreeQuizPreview() {
-    val item = QuizDataSource.items.first()
     WoofScreenQuiz(
 //        quizItem = item,
 //        isFinished = true,
