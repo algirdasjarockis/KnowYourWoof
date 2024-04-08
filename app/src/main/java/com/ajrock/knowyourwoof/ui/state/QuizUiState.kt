@@ -9,5 +9,6 @@ data class QuizUiState(
     val answered: Int = 0,
     val currentQuizIndex: Int = 0,
     val finished: Boolean = false,
+    val errorMessage: String = "",
     val assessmentMessage: String = ""
 )
