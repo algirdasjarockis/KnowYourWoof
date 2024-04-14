@@ -1,12 +1,9 @@
 package com.ajrock.knowyourwoof
 
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -18,34 +15,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.ajrock.knowyourwoof.ui.WoofScreenQuiz
-import com.ajrock.knowyourwoof.ui.WoofScreenStats
-import com.ajrock.knowyourwoof.ui.WoofScreenWelcome
+import com.ajrock.knowyourwoof.ui.ROOT_ROUTE_ABOUT
+import com.ajrock.knowyourwoof.ui.ROOT_ROUTE_QUIZ
+import com.ajrock.knowyourwoof.ui.ROOT_ROUTE_STATS
+import com.ajrock.knowyourwoof.ui.ROOT_ROUTE_WELCOME
+import com.ajrock.knowyourwoof.ui.aboutScreen
+import com.ajrock.knowyourwoof.ui.isNavIconVisible
+import com.ajrock.knowyourwoof.ui.navigateToQuizScreen
+import com.ajrock.knowyourwoof.ui.quizScreen
+import com.ajrock.knowyourwoof.ui.statsScreen
+import com.ajrock.knowyourwoof.ui.welcomeScreen
 import com.ajrock.knowyourwoof.viewmodel.QuizViewModel
-import com.ajrock.knowyourwoof.viewmodel.StatsViewModel
 import org.koin.androidx.compose.koinViewModel
-
-enum class WoofRoute {
-    Welcome,
-    Quiz,
-    Assessment,
-    Stats,
-    About
-}
-
-enum class WoofNavigationItem(val route: WoofRoute, val labelText: String) {
-    Quiz(route = WoofRoute.Quiz, labelText = "Quiz"),
-    Stats(route = WoofRoute.Stats, labelText = "Statistics"),
-    About(route = WoofRoute.About, labelText = "About")
-}
 
 @Composable
 fun WoofApp(
@@ -53,16 +41,14 @@ fun WoofApp(
     quizViewModel: QuizViewModel = koinViewModel(),
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = WoofRoute.valueOf(
-        backStackEntry?.destination?.route ?: WoofRoute.Welcome.name
-    )
+    val currentRoute = backStackEntry?.destination?.route ?: ROOT_ROUTE_WELCOME
 
     Scaffold(
         topBar = {
             var title = "Woof!"
 //            if (currentRoute == WoofRoute.Quiz)
 //                title = "%d/%d question".format(uiState.currentQuizIndex + 1, viewModel.maxQuizItemCount)
-            WoofAppBar(currentRoute = currentRoute, navController = navController, title = title)
+            WoofAppBar(navController = navController, title = title)
         },
         bottomBar = {
             WoofNavigationBar(currentRoute, navController)
@@ -70,39 +56,25 @@ fun WoofApp(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = WoofRoute.Welcome.name,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
+            startDestination = ROOT_ROUTE_WELCOME,
+            modifier = Modifier.padding(innerPadding)
         ) {
-            composable(route = WoofRoute.Welcome.name) {
-                WoofScreenWelcome(onStartQuizClicked = { navController.navigate(WoofRoute.Quiz.name) })
-            }
-            composable(route = WoofRoute.Quiz.name) {
-                WoofScreenQuiz(viewModel = quizViewModel)
-            }
-            composable(route = WoofRoute.Stats.name) {
-                val statsViewModel = koinViewModel<StatsViewModel>()
-                val uiState = statsViewModel.uiState.collectAsState()
-                WoofScreenStats(uiState.value)
-            }
-            composable(route = WoofRoute.About.name) {
-
-            }
+            welcomeScreen { navController.navigateToQuizScreen() }
+            quizScreen(quizViewModel)
+            statsScreen()
+            aboutScreen()
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WoofAppBar(
-    currentRoute: WoofRoute,
+private fun WoofAppBar(
     navController: NavHostController,
     title: String,
     modifier: Modifier = Modifier
 ) {
-    val showNavIcon = currentRoute != WoofRoute.Quiz && currentRoute != WoofRoute.Welcome
+    val showNavIcon = navController.isNavIconVisible()
 
     CenterAlignedTopAppBar(
         title = { Text(title) },
@@ -123,16 +95,24 @@ fun WoofAppBar(
     )
 }
 
+private enum class WoofNavigationItem(
+    val route: String,
+    val labelText: String,
+    @DrawableRes val icon: Int
+) {
+    Quiz(route = ROOT_ROUTE_QUIZ, labelText = "Quiz", icon = R.drawable.doggo_24px),
+    Stats(route = ROOT_ROUTE_STATS, labelText = "Statistics", icon = R.drawable.bar_chart_4_bars_24px),
+    About(route = ROOT_ROUTE_ABOUT, labelText = "About", icon = R.drawable.pets_24px)
+}
+
 @Composable
-fun WoofNavigationBar(
-    currentRoute: WoofRoute,
+private fun WoofNavigationBar(
+    currentRoute: String,
     navController: NavHostController
 ) {
     val items = listOf(WoofNavigationItem.Quiz, WoofNavigationItem.Stats, WoofNavigationItem.About)
 
-    NavigationBar(
-
-    ) {
+    NavigationBar {
         items.forEach { item ->
             val onSameRoute = currentRoute == item.route
 
@@ -140,10 +120,10 @@ fun WoofNavigationBar(
                 selected = onSameRoute,
                 onClick = {
                     if (!onSameRoute)
-                        navController.navigate(item.route.name)
+                        navController.navigate(item.route)
                 },
-                label = { Text(text = item.labelText)},
-                icon = { Icon(Icons.Filled.Favorite, null) }
+                label = { Text(text = item.labelText) },
+                icon = { Icon(painterResource(item.icon), null) }
             )
         }
     }

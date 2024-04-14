@@ -10,8 +10,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -23,17 +21,18 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ajrock.knowyourwoof.R
-import com.ajrock.knowyourwoof.viewmodel.QuizViewModel
-import org.koin.androidx.compose.koinViewModel
+import com.ajrock.knowyourwoof.ui.state.QuizUiState
 
 @Composable
 fun WoofScreenQuiz(
+    uiState: QuizUiState,
     modifier: Modifier = Modifier,
-    viewModel: QuizViewModel = koinViewModel(),
+    onNextButtonClick: () -> Unit = {},
+    onAnswerSelect: (String) -> Unit = {},
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    //val uiState by viewModel.uiState.collectAsState()
     val message = uiState.assessmentMessage
-    val onNextButtonClick = { viewModel.nextQuizItem() }
+    //val onNextButtonClick = { viewModel.nextQuizItem() }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -72,7 +71,8 @@ fun WoofScreenQuiz(
             if (message.isEmpty()) {
                 SelectionGroup(
                     options = uiState.options,
-                    onSelected = { viewModel.checkAnswer(it) },
+                    //onSelected = { viewModel.checkAnswer(it) },
+                    onSelected = onAnswerSelect,
                     modifier = Modifier.alpha(if (message.isEmpty()) 1f else 0f)
                 )
             }
@@ -144,9 +144,6 @@ fun FinishedQuizItem(
 @Composable
 fun WoofScreeQuizPreview() {
     WoofScreenQuiz(
-//        quizItem = item,
-//        isFinished = true,
-//        message = "akdsjfaksdjf",
-//        options = listOf(item.doggo, "Dog2", "Dog3").shuffled()
+        QuizUiState(assessmentMessage = "hello")
     )
 }
