@@ -19,17 +19,19 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 private const val MAX_QUIZ_ITEMS = 3
+// skip these images
+// https://images.dog.ceo/breeds/shihtzu/n02086240_7195.jpg
+// https://images.dog.ceo/breeds/husky/n02110185_6473.jpg
+// https://images.dog.ceo/breeds/germanshepherd/n02106662_22394.jpg
 
 class QuizViewModel(
     private val repository: IScoresRepository,
     private val doggosRepo: IDogRepository
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(QuizUiState())
     private var _allDoggos = setOf<BreedModel>()
 
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
-    val maxQuizItemCount = MAX_QUIZ_ITEMS
 
     init {
         Log.d("ViewModel", "QuizViewModel initialized")
@@ -52,7 +54,7 @@ class QuizViewModel(
             _uiState.update { currentState ->
                 currentState.copy(
                     assessmentMessage = "Correct!${finalAssessmentMsg}"
-                        .format(_uiState.value.answered + 1, maxQuizItemCount),
+                        .format(_uiState.value.answered + 1, MAX_QUIZ_ITEMS),
                     answered = currentState.answered + 1,
                     finished = finished
                 )
@@ -61,7 +63,7 @@ class QuizViewModel(
             _uiState.update { currentState ->
                 currentState.copy(
                     assessmentMessage = "No, you donkey! Correct answer is ${currentState.currentQuizItem.doggo}${finalAssessmentMsg}"
-                        .format(_uiState.value.answered, maxQuizItemCount),
+                        .format(_uiState.value.answered, MAX_QUIZ_ITEMS),
                     finished = finished
                 )
             }
@@ -74,7 +76,7 @@ class QuizViewModel(
             viewModelScope.launch {
                 repository.insertScore(ScoreEntity(
                     correctAnswers = _uiState.value.answered,
-                    totalAttempts = maxQuizItemCount,
+                    totalAttempts = MAX_QUIZ_ITEMS,
                     date = now
                 ))
             }
@@ -93,6 +95,7 @@ class QuizViewModel(
         val pickedItemPair = pickCurrentQuizOptions()
         _uiState.value = QuizUiState(
             currentQuizItem = pickedItemPair.first,
+            totalQuizItems = MAX_QUIZ_ITEMS,
             options = pickedItemPair.second
         )
     }

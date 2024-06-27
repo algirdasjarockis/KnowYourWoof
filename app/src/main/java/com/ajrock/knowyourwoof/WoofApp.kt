@@ -3,7 +3,7 @@ package com.ajrock.knowyourwoof
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +27,7 @@ import com.ajrock.knowyourwoof.ui.ROOT_ROUTE_QUIZ
 import com.ajrock.knowyourwoof.ui.ROOT_ROUTE_STATS
 import com.ajrock.knowyourwoof.ui.ROOT_ROUTE_WELCOME
 import com.ajrock.knowyourwoof.ui.aboutScreen
+import com.ajrock.knowyourwoof.ui.isCurrentRouteScreenQuiz
 import com.ajrock.knowyourwoof.ui.isNavIconVisible
 import com.ajrock.knowyourwoof.ui.navigateToQuizScreen
 import com.ajrock.knowyourwoof.ui.quizScreen
@@ -46,8 +47,8 @@ fun WoofApp(
     Scaffold(
         topBar = {
             var title = "Woof!"
-//            if (currentRoute == WoofRoute.Quiz)
-//                title = "%d/%d question".format(uiState.currentQuizIndex + 1, viewModel.maxQuizItemCount)
+            if (navController.isCurrentRouteScreenQuiz())
+                title = "Woof! Who am I?"
             WoofAppBar(navController = navController, title = title)
         },
         bottomBar = {
@@ -79,14 +80,16 @@ private fun WoofAppBar(
     CenterAlignedTopAppBar(
         title = { Text(title) },
         colors = TopAppBarDefaults.mediumTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
         ),
         modifier = modifier,
         navigationIcon = {
             if (showNavIcon) {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
-                        imageVector = Icons.Filled.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back Button"
                     )
                 }

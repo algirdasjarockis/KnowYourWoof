@@ -52,6 +52,12 @@ fun NavController.navigateToQuizScreen() {
 }
 
 fun NavController.isNavIconVisible(): Boolean {
-    val currentRoute = currentBackStackEntry?.destination?.route
-    return currentRoute != ROOT_ROUTE_QUIZ && currentRoute != ROOT_ROUTE_WELCOME
+    val currentRoute = getCurrentRoute()
+    return getCurrentRoute() != ROOT_ROUTE_QUIZ && currentRoute != ROOT_ROUTE_WELCOME
 }
+
+fun NavController.isCurrentRouteScreenQuiz(): Boolean {
+    return getCurrentRoute() == ROOT_ROUTE_QUIZ
+}
+
+private fun NavController.getCurrentRoute() = currentBackStackEntry?.destination?.route;

@@ -1,13 +1,15 @@
 package com.ajrock.knowyourwoof.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,11 +18,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ajrock.knowyourwoof.R
+import com.ajrock.knowyourwoof.model.BreedModel
+import com.ajrock.knowyourwoof.model.QuizItem
 import com.ajrock.knowyourwoof.ui.state.QuizUiState
 
 @Composable
@@ -30,17 +35,17 @@ fun WoofScreenQuiz(
     onNextButtonClick: () -> Unit = {},
     onAnswerSelect: (String) -> Unit = {},
 ) {
-    //val uiState by viewModel.uiState.collectAsState()
     val message = uiState.assessmentMessage
-    //val onNextButtonClick = { viewModel.nextQuizItem() }
 
     Column(
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
+            .padding(horizontal = 20.dp)
+            .padding(top = 30.dp)
     ) {
-        Text(text = "Woof! Who am I?")
+        Text(text = "%d of %d".format(uiState.currentQuizIndex + 1, uiState.totalQuizItems))
+        Spacer(modifier = Modifier.height(8.dp))
         Card(
             modifier = Modifier
                 //.padding(horizontal = 12.dp)
@@ -54,41 +59,44 @@ fun WoofScreenQuiz(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .height(300.dp)
                     .aspectRatio(1f)
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier
+            .height(32.dp)
+            .weight(1f))
 
-        if (uiState.finished) {
-            FinishedQuizItem(
-                message = message,
-                onNextButtonClick = onNextButtonClick,
-                modifier = modifier
-            )
-        } else {
-            if (message.isEmpty()) {
-                SelectionGroup(
-                    options = uiState.options,
-                    //onSelected = { viewModel.checkAnswer(it) },
-                    onSelected = onAnswerSelect,
-                    modifier = Modifier.alpha(if (message.isEmpty()) 1f else 0f)
-                )
-            }
-            else {
-                NextQuizItem(
+        Column(
+            modifier = Modifier.padding(bottom = 20.dp)
+        ) {
+            if (uiState.finished) {
+                FinishedQuizItem(
                     message = message,
                     onNextButtonClick = onNextButtonClick,
-                    modifier = Modifier.alpha(if (message.isEmpty()) 0f else 1f)
+                    modifier = modifier
                 )
+            } else {
+                if (message.isEmpty()) {
+                    SelectionGroup(
+                        options = uiState.options,
+                        onSelected = onAnswerSelect,
+                        modifier = Modifier.alpha(if (message.isEmpty()) 1f else 0f)
+                    )
+                } else {
+                    NextQuizItem(
+                        message = message,
+                        onNextButtonClick = onNextButtonClick,
+                        modifier = Modifier.alpha(if (message.isEmpty()) 0f else 1f)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun SelectionGroup(
+private fun SelectionGroup(
     options: List<String>,
     modifier: Modifier = Modifier,
     onSelected: (String) -> Unit = {},
@@ -98,15 +106,22 @@ fun SelectionGroup(
         modifier = modifier
     ) {
         options.forEach { option ->
-            Button(onClick = { onSelected(option) }) {
-                Text(text = option)
+            Button(
+                modifier = Modifier.padding(bottom = 4.dp),
+                onClick = { onSelected(option) }
+            ) {
+                Text(
+                    text = option,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
 }
 
 @Composable
-fun NextQuizItem(
+private fun NextQuizItem(
     message: String,
     onNextButtonClick: () -> Unit,
     modifier: Modifier
@@ -123,7 +138,7 @@ fun NextQuizItem(
 }
 
 @Composable
-fun FinishedQuizItem(
+private fun FinishedQuizItem(
     message: String,
     onNextButtonClick: () -> Unit,
     modifier: Modifier
@@ -134,16 +149,45 @@ fun FinishedQuizItem(
     ) {
         Text(text = "Quiz is finished!")
         Text(text = message)
-        Button(onClick = onNextButtonClick) {
-            Text(text = "Restart!")
+        Button(
+            onClick = onNextButtonClick,
+            colors = ButtonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.secondary,
+                disabledContainerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                disabledContentColor = MaterialTheme.colorScheme.onSecondary
+            )
+        ) {
+            Text(
+                text = "Restart!",
+                style = MaterialTheme.typography.titleLarge
+            )
         }
     }
 }
 
 @Preview(showSystemUi = true)
 @Composable
-fun WoofScreeQuizPreview() {
+private fun WoofScreeQuizPreview() {
     WoofScreenQuiz(
-        QuizUiState(assessmentMessage = "hello")
+        QuizUiState(
+            assessmentMessage = "",
+            finished = true,
+            options = listOf("Choice A", "Choice B with very long name", "Choice C"),
+            currentQuizItem = QuizItem(
+                BreedModel("Some doggo", "Good doggo", null),
+                ""
+            )
+        )
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FinishedQuizItemPreview() {
+    FinishedQuizItem(
+        message = "This is some message",
+        onNextButtonClick = { },
+        modifier = Modifier
     )
 }
