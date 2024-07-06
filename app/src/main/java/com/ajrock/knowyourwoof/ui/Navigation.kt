@@ -22,12 +22,14 @@ fun NavGraphBuilder.welcomeScreen(
 }
 
 fun NavGraphBuilder.quizScreen(
-    viewModel: QuizViewModel
+    viewModel: QuizViewModel,
+    showTwoColumns: Boolean = false
 ) {
     composable(route = ROOT_ROUTE_QUIZ) {
         val state = viewModel.uiState.collectAsState()
         WoofScreenQuiz(
             uiState = state.value,
+            showTwoColumns = showTwoColumns,
             onNextButtonClick = viewModel::nextQuizItem,
             onAnswerSelect = viewModel::checkAnswer
         )

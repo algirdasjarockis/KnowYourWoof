@@ -30,7 +30,7 @@ fun WoofScreenWelcome(
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
     ) {
         // Designed by Freepik
@@ -38,7 +38,7 @@ fun WoofScreenWelcome(
             painter = painterResource(id = R.drawable.doggo),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
+            modifier = modifier
                 .height(300.dp)
                 .width(300.dp)
                 .clip(CircleShape)

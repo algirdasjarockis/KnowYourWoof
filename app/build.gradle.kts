@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
 
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.adaptive.android)
+    implementation(libs.androidx.material3.adaptive.navigation.suite.android)
     annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
 

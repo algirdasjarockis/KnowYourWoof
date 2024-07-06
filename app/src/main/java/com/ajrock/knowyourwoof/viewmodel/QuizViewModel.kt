@@ -62,7 +62,7 @@ class QuizViewModel(
         } else {
             _uiState.update { currentState ->
                 currentState.copy(
-                    assessmentMessage = "No, you donkey! Correct answer is ${currentState.currentQuizItem.doggo}${finalAssessmentMsg}"
+                    assessmentMessage = "Woof, no! Correct answer is ${currentState.currentQuizItem.doggo.displayName}${finalAssessmentMsg}"
                         .format(_uiState.value.answered, MAX_QUIZ_ITEMS),
                     finished = finished
                 )
