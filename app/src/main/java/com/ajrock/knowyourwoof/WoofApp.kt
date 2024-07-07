@@ -24,9 +24,9 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun WoofApp(
     navController: NavHostController = rememberNavController(),
-    quizViewModel: QuizViewModel = koinViewModel(),
     windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
 ) {
+    val quizViewModel: QuizViewModel = koinViewModel()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: ROOT_ROUTE_WELCOME
 
@@ -53,7 +53,7 @@ fun WoofApp(
         ) {
             welcomeScreen { navController.navigateToQuizScreen() }
             quizScreen(quizViewModel, windowSizeClass.isExpanded)
-            statsScreen()
+            statsScreen(windowSizeClass.isExpanded) { navController.navigateUp() }
             aboutScreen()
         }
     }

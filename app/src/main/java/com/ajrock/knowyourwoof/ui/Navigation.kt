@@ -36,11 +36,18 @@ fun NavGraphBuilder.quizScreen(
     }
 }
 
-fun NavGraphBuilder.statsScreen() {
+fun NavGraphBuilder.statsScreen(
+    isScreenExpanded: Boolean,
+    onNavigateUp: () -> Unit
+) {
     composable(route = ROOT_ROUTE_STATS) {
         val statsViewModel = koinViewModel<StatsViewModel>()
         val uiState = statsViewModel.uiState.collectAsState()
-        WoofScreenStats(uiState.value)
+        WoofScreenStats(
+            isScreenExpanded = isScreenExpanded,
+            uiState = uiState.value,
+            onNavigateUp = onNavigateUp
+        )
     }
 }
 
