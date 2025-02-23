@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,8 +46,9 @@ fun WoofScreenWelcome(
         )
         Spacer(modifier = Modifier.padding(20.dp))
         Button(onClick = onStartQuizClicked) {
-            Text(text = "Are you ready?")
-            Text(text = "Woof!", fontWeight = FontWeight.Bold)
+            Text(text = "Are you ready?", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.padding(2.dp))
+            Text(text = "Woof!", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
         }
     }
 }

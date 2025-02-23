@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.adaptive.android)
     implementation(libs.androidx.material3.adaptive.navigation.suite.android)
+    implementation(libs.androidx.ui.text.google.fonts)
     annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
 

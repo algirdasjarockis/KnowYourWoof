@@ -86,7 +86,10 @@ private fun QuizContentOneColumn(
             .padding(top = 30.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text(text = "%d of %d".format(uiState.currentQuizIndex + 1, uiState.totalQuizItems))
+        Text(
+            text = "%d of %d".format(uiState.currentQuizIndex + 1, uiState.totalQuizItems),
+            style = MaterialTheme.typography.titleLarge
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Card(
             modifier = Modifier
@@ -220,7 +223,8 @@ private fun SelectionGroup(
                 Text(
                     text = option,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }
